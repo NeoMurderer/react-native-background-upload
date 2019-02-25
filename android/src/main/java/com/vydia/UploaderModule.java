@@ -1,4 +1,4 @@
-package com.vydia.RNUploader;
+package com.restar.RNUploader;
 
 import android.content.Context;
 import android.support.annotation.Nullable;

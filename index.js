@@ -25,7 +25,7 @@ export type StartUploadArgs = {
   notification?: NotificationArgs
 }
 
-const NativeModule = NativeModules.RNFileUploader // iOS is VydiaRNFileUploader and Android is NativeModules 
+const NativeModule = NativeModules.RNFileUploader
 const eventPrefix = 'RNFileUploader-'
 
 /*

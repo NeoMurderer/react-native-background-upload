@@ -25,12 +25,6 @@ Note: if you are installing on React Native < 0.47, use `react-native-background
 
 ### Or, Manually Link It
 
-#### iOS
-
-1. In the XCode's "Project navigator", right click on your project's Libraries folder ➜ `Add Files to <...>`
-2. Go to `node_modules` ➜ `react-native-background-upload` ➜ `ios` ➜ select `VydiaRNFileUploader.xcodeproj`
-3. Add `VydiaRNFileUploader.a` to `Build Phases -> Link Binary With Libraries`
-
 #### Android
 1. Add the following lines to `android/settings.gradle`:
 
@@ -52,7 +46,7 @@ Note: if you are installing on React Native < 0.47, use `react-native-background
 3. Add the import and link the package in `MainApplication.java`:
 
     ```java
-    import com.vydia.RNUploader.UploaderReactPackage;  <-- add this import
+    import com.restar.RNUploader.UploaderReactPackage;  <-- add this import
 
     public class MainApplication extends Application implements ReactApplication {
         @Override
@@ -66,10 +60,6 @@ Note: if you are installing on React Native < 0.47, use `react-native-background
     ```
 
 4. Ensure Android SDK versions.  Open your app's `android/app/build.gradle` file.  Ensure `compileSdkVersion` and `targetSdkVersion` are 25.  Otherwise you'll get compilation errors.
-
-## 3. Expo
-
-To use this library with [Expo](https://expo.io) one must first detach (eject) the project and follow the normal `react-native link` instructions. Additionally on iOS there is a must to add a Header Search Path to other dependencies which are managed using Pods. To do so one has to add `$(SRCROOT)/../../../ios/Pods/Headers/Public` to Header Search Path in `VydiaRNFileUploader` module using XCode. 
 
 # Usage
 
@@ -323,13 +313,13 @@ In `MainApplication.java`:
 Change
 
     ```java
-    import com.vydia.UploaderReactPackage;
+    import com.restar.UploaderReactPackage;
     ```
 
 to
 
     ```java
-    import com.vydia.RNUploader.UploaderReactPackage;
+    import com.restar.RNUploader.UploaderReactPackage;
     ```
 
 Then open your app's `android/app/build.gradle` file.
