@@ -25,16 +25,8 @@ export type StartUploadArgs = {
   notification?: NotificationArgs
 }
 
-const NativeModule = NativeModules.VydiaRNFileUploader || NativeModules.RNFileUploader // iOS is VydiaRNFileUploader and Android is NativeModules 
+const NativeModule = NativeModules.RNFileUploader // iOS is VydiaRNFileUploader and Android is NativeModules 
 const eventPrefix = 'RNFileUploader-'
-
-// for IOS, register event listeners or else they don't fire on DeviceEventEmitter
-if (NativeModules.VydiaRNFileUploader) {
-  NativeModule.addListener(eventPrefix + 'progress')
-  NativeModule.addListener(eventPrefix + 'error')
-  NativeModule.addListener(eventPrefix + 'cancelled')
-  NativeModule.addListener(eventPrefix + 'completed')
-}
 
 /*
 Gets file information for the path specified.

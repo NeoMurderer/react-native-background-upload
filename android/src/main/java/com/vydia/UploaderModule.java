@@ -139,52 +139,6 @@ public class UploaderModule extends ReactContextBaseJavaModule {
 
     final String customUploadId = options.hasKey("customUploadId") && options.getType("method") == ReadableType.String ? options.getString("customUploadId") : null;
 
-    try {
-      UploadStatusDelegate statusDelegate = new UploadStatusDelegate() {
-        @Override
-        public void onProgress(Context context, UploadInfo uploadInfo) {
-          WritableMap params = Arguments.createMap();
-          params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
-          params.putInt("progress", uploadInfo.getProgressPercent()); //0-100
-          sendEvent("progress", params);
-        }
-
-        @Override
-        public void onError(Context context, UploadInfo uploadInfo, ServerResponse serverResponse, Exception exception) {
-          WritableMap params = Arguments.createMap();
-          params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
-          if (serverResponse != null) {
-            params.putInt("responseCode", serverResponse.getHttpCode());
-            params.putString("responseBody", serverResponse.getBodyAsString());
-          }
-
-          // Make sure we do not try to call getMessage() on a null object
-          if (exception != null){
-            params.putString("error", exception.getMessage());
-          } else {
-            params.putString("error", "Unknown exception");
-          }
-
-          sendEvent("error", params);
-        }
-
-        @Override
-        public void onCompleted(Context context, UploadInfo uploadInfo, ServerResponse serverResponse) {
-          WritableMap params = Arguments.createMap();
-          params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
-          params.putInt("responseCode", serverResponse.getHttpCode());
-          params.putString("responseBody", serverResponse.getBodyAsString());
-          sendEvent("completed", params);
-        }
-
-        @Override
-        public void onCancelled(Context context, UploadInfo uploadInfo) {
-          WritableMap params = Arguments.createMap();
-          params.putString("id", customUploadId != null ? customUploadId : uploadInfo.getUploadId());
-          sendEvent("cancelled", params);
-        }
-      };
-
       HttpUploadRequest<?> request;
 
       if (requestType.equals("raw")) {
@@ -207,13 +161,12 @@ public class UploaderModule extends ReactContextBaseJavaModule {
 
 
       request.setMethod(method)
-        .setMaxRetries(2)
-        .setDelegate(statusDelegate);
+        .setMaxRetries(1)
 
       if (notification.getBoolean("enabled")) {
 
         UploadNotificationConfig notificationConfig = new UploadNotificationConfig();
-
+        notificationConfig.setTitleForAllStatuses("3D Scan Upload");
         if (notification.hasKey("notificationChannel")){
           notificationConfig.setNotificationChannelId(notification.getString("notificationChannel"));
         }
