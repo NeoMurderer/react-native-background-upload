@@ -28,6 +28,8 @@ import net.gotev.uploadservice.UploadStatusDelegate;
 import net.gotev.uploadservice.okhttp.OkHttpStack;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.MalformedURLException;
 
 /**
  * Created by stephen on 12/8/16.
@@ -139,102 +141,106 @@ public class UploaderModule extends ReactContextBaseJavaModule {
 
     final String customUploadId = options.hasKey("customUploadId") && options.getType("method") == ReadableType.String ? options.getString("customUploadId") : null;
 
-      HttpUploadRequest<?> request;
+      HttpUploadRequest<?> request = null;
 
+      if (!options.hasKey("field")) {
+        promise.reject(new IllegalArgumentException("field is required field for multipart type."));
+        return;
+      }
+
+      if (options.getType("field") != ReadableType.String) {
+        promise.reject(new IllegalArgumentException("field must be string."));
+        return;
+      }
+
+    try {
+      request = new MultipartUploadRequest(this.getReactApplicationContext(), customUploadId, url)
+              .addFileToUpload(filePath, options.getString("field"));
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (MalformedURLException e) {
+      e.printStackTrace();
+    }
+
+    if(request == null) {
+      promise.reject(new IllegalArgumentException("Request not initialized."));
+      return;
+    }
+    request.setMethod(method)
+        .setMaxRetries(1);
+
+    if (notification.getBoolean("enabled")) {
+
+      UploadNotificationConfig notificationConfig = new UploadNotificationConfig();
+      notificationConfig.setTitleForAllStatuses("3D Scan Upload");
+      if (notification.hasKey("notificationChannel")){
+        notificationConfig.setNotificationChannelId(notification.getString("notificationChannel"));
+      }
+
+      if (notification.hasKey("autoClear") && notification.getBoolean("autoClear")){
+        notificationConfig.getCompleted().autoClear = true;
+      }
+
+      if (notification.hasKey("enableRingTone") && notification.getBoolean("enableRingTone")){
+        notificationConfig.setRingToneEnabled(true);
+      }
+
+      if (notification.hasKey("onCompleteTitle")) {
+        notificationConfig.getCompleted().title = notification.getString("onCompleteTitle");
+      }
+
+      if (notification.hasKey("onCompleteMessage")) {
+        notificationConfig.getCompleted().message = notification.getString("onCompleteMessage");
+      }
+
+      if (notification.hasKey("onErrorTitle")) {
+        notificationConfig.getError().title = notification.getString("onErrorTitle");
+      }
+
+      if (notification.hasKey("onErrorMessage")) {
+        notificationConfig.getError().message = notification.getString("onErrorMessage");
+      }
+
+      if (notification.hasKey("onProgressTitle")) {
+        notificationConfig.getProgress().title = notification.getString("onProgressTitle");
+      }
+
+      if (notification.hasKey("onProgressMessage")) {
+        notificationConfig.getProgress().message = notification.getString("onProgressMessage");
+      }
+
+      if (notification.hasKey("onCancelledTitle")) {
+        notificationConfig.getCancelled().title = notification.getString("onCancelledTitle");
+      }
+
+      if (notification.hasKey("onCancelledMessage")) {
+        notificationConfig.getCancelled().message = notification.getString("onCancelledMessage");
+      }
+
+      request.setNotificationConfig(notificationConfig);
+
+    }
+
+    if (options.hasKey("parameters")) {
       if (requestType.equals("raw")) {
-        request = new BinaryUploadRequest(this.getReactApplicationContext(), customUploadId, url)
-                .setFileToUpload(filePath);
-      } else {
-        if (!options.hasKey("field")) {
-          promise.reject(new IllegalArgumentException("field is required field for multipart type."));
+        promise.reject(new IllegalArgumentException("Parameters supported only in multipart type"));
+        return;
+      }
+
+      ReadableMap parameters = options.getMap("parameters");
+      ReadableMapKeySetIterator keys = parameters.keySetIterator();
+
+      while (keys.hasNextKey()) {
+        String key = keys.nextKey();
+
+        if (parameters.getType(key) != ReadableType.String) {
+          promise.reject(new IllegalArgumentException("Parameters must be string key/values. Value was invalid for '" + key + "'"));
           return;
         }
 
-        if (options.getType("field") != ReadableType.String) {
-          promise.reject(new IllegalArgumentException("field must be string."));
-          return;
-        }
-
-        request = new MultipartUploadRequest(this.getReactApplicationContext(), customUploadId, url)
-                .addFileToUpload(filePath, options.getString("field"));
+        request.addParameter(key, parameters.getString(key));
       }
-
-
-      request.setMethod(method)
-        .setMaxRetries(1)
-
-      if (notification.getBoolean("enabled")) {
-
-        UploadNotificationConfig notificationConfig = new UploadNotificationConfig();
-        notificationConfig.setTitleForAllStatuses("3D Scan Upload");
-        if (notification.hasKey("notificationChannel")){
-          notificationConfig.setNotificationChannelId(notification.getString("notificationChannel"));
-        }
-
-        if (notification.hasKey("autoClear") && notification.getBoolean("autoClear")){
-          notificationConfig.getCompleted().autoClear = true;
-        }
-
-        if (notification.hasKey("enableRingTone") && notification.getBoolean("enableRingTone")){
-          notificationConfig.setRingToneEnabled(true);
-        }
-
-        if (notification.hasKey("onCompleteTitle")) {
-          notificationConfig.getCompleted().title = notification.getString("onCompleteTitle");
-        }
-
-        if (notification.hasKey("onCompleteMessage")) {
-          notificationConfig.getCompleted().message = notification.getString("onCompleteMessage");
-        }
-
-        if (notification.hasKey("onErrorTitle")) {
-          notificationConfig.getError().title = notification.getString("onErrorTitle");
-        }
-
-        if (notification.hasKey("onErrorMessage")) {
-          notificationConfig.getError().message = notification.getString("onErrorMessage");
-        }
-
-        if (notification.hasKey("onProgressTitle")) {
-          notificationConfig.getProgress().title = notification.getString("onProgressTitle");
-        }
-
-        if (notification.hasKey("onProgressMessage")) {
-          notificationConfig.getProgress().message = notification.getString("onProgressMessage");
-        }
-
-        if (notification.hasKey("onCancelledTitle")) {
-          notificationConfig.getCancelled().title = notification.getString("onCancelledTitle");
-        }
-
-        if (notification.hasKey("onCancelledMessage")) {
-          notificationConfig.getCancelled().message = notification.getString("onCancelledMessage");
-        }
-
-        request.setNotificationConfig(notificationConfig);
-
-      }
-
-      if (options.hasKey("parameters")) {
-        if (requestType.equals("raw")) {
-          promise.reject(new IllegalArgumentException("Parameters supported only in multipart type"));
-          return;
-        }
-
-        ReadableMap parameters = options.getMap("parameters");
-        ReadableMapKeySetIterator keys = parameters.keySetIterator();
-
-        while (keys.hasNextKey()) {
-          String key = keys.nextKey();
-
-          if (parameters.getType(key) != ReadableType.String) {
-            promise.reject(new IllegalArgumentException("Parameters must be string key/values. Value was invalid for '" + key + "'"));
-            return;
-          }
-
-          request.addParameter(key, parameters.getString(key));
-        }
-      }
+    }
 
       if (options.hasKey("headers")) {
         ReadableMap headers = options.getMap("headers");
@@ -251,10 +257,6 @@ public class UploaderModule extends ReactContextBaseJavaModule {
 
       String uploadId = request.startUpload();
       promise.resolve(uploadId);
-    } catch (Exception exc) {
-      Log.e(TAG, exc.getMessage(), exc);
-      promise.reject(exc);
-    }
   }
 
   /*
